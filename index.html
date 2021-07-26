@@ -1,0 +1,69 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Page Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+  </head>
+  <body>
+    <div style="margin-left: auto; margin-right: auto; width: 270px;">
+    <input id="position" placeholder="x y" style="width: 150px;"></textarea>
+    <button onclick="move()" style="width: 100;">move</button>
+    </div>
+    <hr style="width: 200px;">
+    <div id="field" style="margin-left: auto; margin-right: auto; width: 100px;">
+        <textarea id="textarea" style="height: 100; width:100; border: none; resize: none; background-color: white;" disabled></textarea>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      const socket = io.connect();
+      const fieldDiv = document.getElementById("field");
+      const pos = document.getElementById("position");
+      
+      socket.on("start game", (field) => { 
+        showField(field);
+      });
+
+      socket.on("move complete", data => {
+          showField(data.field);
+          console.log('Next move: ' + data.nextMove);
+      })
+
+      socket.on("end", (data) => {
+        alert(data);
+        socket.emit('new game');
+      });
+
+      const move = () => {
+          socket.emit('move', {id: socket.id, position: pos.value});
+          pos.value = '';
+      }
+
+      const showField = (field) => {
+        let fieldView = "";
+        for (let i = 0; i < 3; i++) {
+          for (let j = 0; j < 3; j++) {
+            if (
+              (i === 1 && j === 1) ||
+              (i === 2 && j === 1) ||
+              (i === 0 && j === 1)
+            ) {
+              fieldView += "| " + field[i][j] + " |";
+            } else {
+              fieldView += " " + field[i][j];
+            }
+          }
+          if (i !== 2) {
+            fieldView += "\n--+---+--\n";
+          }
+        }
+        let textArea = document.getElementById("textarea");
+        textArea.value = fieldView;
+        fieldDiv.append(textArea);
+        console.clear();
+        console.log(fieldView)
+      };
+    </script>
+  </body>
+</html>
